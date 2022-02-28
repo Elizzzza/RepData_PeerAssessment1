@@ -22,7 +22,8 @@ The variables included in this dataset are:
 
 ## Setting up the packages
 
-```{r setup, results='hide', message=FALSE}
+
+```r
 library(knitr)
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
@@ -32,26 +33,46 @@ library(tidyverse)
 
 **- Load the data (i.e. *read.csv()*)**
 
-```{r}
+
+```r
 ### loading the data
 activity <- unzip("activity.zip")
 act <- read.csv("activity.csv", header=TRUE, sep=",")
 str(act)
 ```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : chr  "2012-10-01" "2012-10-01" "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
 **- Process/transform the data (if necessary) into a format suitable for your analysis**
 
-```{r}
+
+```r
 ### processing the data
 act <- act %>% 
         mutate(date = as.Date(date, format="%Y-%m-%d"))
 head(act)  ### Print the header of the dataset
 ```
 
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
+```
+
 ## What is mean total number of steps taken per day?
 
 #### 1. Calculate the total number of steps taken per day
 
-```{r}
+
+```r
 ### calculate the sum of steps by date
 act1 <- act %>% 
         group_by(date) %>% 
@@ -61,7 +82,8 @@ act1 <- act %>%
 
 #### 2. Make a histogram of the total number of steps taken each day
 
-```{r histogram, message=F, warning=FALSE}
+
+```r
 ggplot(act1, aes(x=steps_per_day)) + 
         geom_histogram(col = "blue") + 
         labs(x = "Steps Per Day", y = "Frequency") +
@@ -69,15 +91,29 @@ ggplot(act1, aes(x=steps_per_day)) +
         theme_bw()
 ```
 
+![](PA1_template_files/figure-html/histogram-1.png)<!-- -->
+
 #### 3. Calculate and report the mean and median of the total number of steps taken per day
 
-```{r}
+
+```r
 ### calculate the mean of sums of steps per day
 act1 %>% select(steps_per_day) %>% 
         colMeans(na.rm = TRUE)
+```
 
+```
+## steps_per_day 
+##      10766.19
+```
+
+```r
 ### calculate the median of sums of steps per day
 median(act1$steps_per_day, na.rm=TRUE)
+```
+
+```
+## [1] 10765
 ```
 The mean of the total number of steps taken per day is 10766.
 The median of the total number of steps taken per day is 10765.
@@ -86,7 +122,8 @@ The median of the total number of steps taken per day is 10765.
 
 #### 1. Make a time series plot (i.e. *type = "l"*) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r}
+
+```r
 ### calculate the mean of steps per day
 act2 <- act %>% 
         group_by(interval) %>% 
@@ -94,7 +131,20 @@ act2 <- act %>%
 head(act2)  ### Print the header of the dataset
 ```
 
-```{r time series plot}
+```
+## # A tibble: 6 × 2
+##   interval mean_steps
+##      <int>      <dbl>
+## 1        0     1.72  
+## 2        5     0.340 
+## 3       10     0.132 
+## 4       15     0.151 
+## 5       20     0.0755
+## 6       25     2.09
+```
+
+
+```r
 ### make a time series plot of the 5-minute interval (x-axis) and the
 ### average number of steps taken, averaged across all days (y-axis)
 ggplot(act2, aes(x = interval, y = mean_steps)) + 
@@ -104,18 +154,38 @@ ggplot(act2, aes(x = interval, y = mean_steps)) +
         theme_bw()
 ```
 
+![](PA1_template_files/figure-html/time series plot-1.png)<!-- -->
+
 #### 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
 ### find max steps in all 5-min interval
 max_interval <- act2[which.max(act2$mean_steps),]
 max_interval
+```
+
+```
+## # A tibble: 1 × 2
+##   interval mean_steps
+##      <int>      <dbl>
+## 1      835       206.
+```
+
+```r
 ### alternative way to find max steps in all 5-min interval
 max_steps <- max(act2$mean_steps)
 act2 %>%
         filter(mean_steps == max_steps)
 ```
-The `r max_interval[1,1]`th 5-minute interval contains the maximum number of steps `r max_interval[1,2] %>% round(0)`.
+
+```
+## # A tibble: 1 × 2
+##   interval mean_steps
+##      <int>      <dbl>
+## 1      835       206.
+```
+The 835th 5-minute interval contains the maximum number of steps 206.
 
 ## Imputing missing values
 
@@ -123,15 +193,21 @@ Note that there are a number of days/intervals where there are missing values (c
 
 #### 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with *NA*s)
 
-```{r}
+
+```r
 ### calculate the number of rows with NA
 is_complete <- complete.cases(act)
 sum(!is_complete)
 ```
 
+```
+## [1] 2304
+```
+
 #### 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
-```{r}
+
+```r
 ### impute NA with mean steps for that day
 avg_interval <- act %>%
         group_by(interval) %>%
@@ -140,7 +216,8 @@ avg_interval <- act %>%
 
 #### 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r}
+
+```r
 ### create a new dataset that is equal to the original dataset with the missing data filled in
 act_imputed <- act
     for (i in 1:nrow(act_imputed)) {
@@ -156,15 +233,31 @@ act_imputed <- act
 head(act_imputed)
 ```
 
-```{r}
+```
+##       steps       date interval
+## 1 1.7169811 2012-10-01        0
+## 2 0.3396226 2012-10-01        5
+## 3 0.1320755 2012-10-01       10
+## 4 0.1509434 2012-10-01       15
+## 5 0.0754717 2012-10-01       20
+## 6 2.0943396 2012-10-01       25
+```
+
+
+```r
 ### check number of rows with NA in imputed dataset
 is_complete <- complete.cases(act_imputed)
 sum(!is_complete)
 ```
 
+```
+## [1] 0
+```
+
 #### 4. Make a histogram of the total number of steps taken each day and Calculate and report the **mean** and **median** total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-```{r, message=FALSE}
+
+```r
 ### calculate the total number of steps per day with imputed dataset
 act3 <- act_imputed %>%
     group_by(date) %>%
@@ -176,10 +269,24 @@ ggplot(act3, aes(x = total_steps)) +
     ggtitle("Histogram of Total Steps Taken Per Day") +
     theme_bw()
 ```
-```{r}
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+```r
 ### calculate and report the mean and median total number of steps taken per day
 mean(act3$total_steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(act3$total_steps)
+```
+
+```
+## [1] 10766.19
 ```
 The mean of the total number of steps taken per day is 10766.
 The median of the total number of steps taken per day is 10766.
@@ -192,7 +299,8 @@ For this part the **weekdays()** function may be of some help here. Use the data
 
 #### 1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
-```{r}
+
+```r
 ### create a new factor variable in the dataset with two levels 
 ### “weekday” and “weekend” indicating whether a given date is a weekday or weekend day
 act_imputed <- act_imputed %>% 
@@ -201,7 +309,8 @@ act_imputed <- act_imputed %>%
 
 #### 2. Make a panel plot containing a time series plot (i.e.**type = "l"**) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
-```{r, message=FALSE}
+
+```r
 ### calculate the average number of steps per day across weekdays/ weekends
 act4 <- act_imputed %>%
     group_by(interval, weekday) %>%
@@ -216,3 +325,5 @@ ggplot(act4, aes(x = interval, y = avg_steps)) +
          y = "Average Number of Steps \n across all weekdays or weekends") +
     theme_bw()
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
